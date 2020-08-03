@@ -29,6 +29,7 @@ private:
     void readUrlElement(vector<string>&);
     //读取库地址
     void readAddressElement(vector<string>&);
+	//跳过未知标签的字符块
     void skipUnknownElement();
     QTreeWidget* treeWidget;
     QXmlStreamReader reader;
