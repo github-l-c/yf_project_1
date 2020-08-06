@@ -8,15 +8,15 @@ MainWindow::MainWindow(QWidget *parent)
     QTextEdit* text_edit = new QTextEdit(this);
     setCentralWidget(text_edit);
 
-    vector<string>LibraryUrls;
-    ReadLibraryUrl(LibraryUrls);
-    for (int i = 0; i < LibraryUrls.size(); ++i)
+    vector<string>libraryUrls;
+    ReadLibraryUrl(libraryUrls);
+    for (int i = 0; i < libraryUrls.size(); ++i)
     {
-        text_edit->append(QString::fromStdString(urls[i]));
+        text_edit->append(QString::fromStdString(libraryUrls[i]));
     }
 }
 
-bool MainWindow::ReadLibraryUrl(vector<string>& LibraryUrls, const QString& fileName)
+bool MainWindow::ReadLibraryUrl(vector<string>& libraryUrls, const QString& fileName)
 {
     QString urlFilePath = fileName;
     if (fileName == "")
@@ -30,6 +30,7 @@ bool MainWindow::ReadLibraryUrl(vector<string>& LibraryUrls, const QString& file
         return false;
     }
     reader.setDevice(&file);
+	
     while (!reader.atEnd())
     {
 
@@ -37,7 +38,7 @@ bool MainWindow::ReadLibraryUrl(vector<string>& LibraryUrls, const QString& file
         {
             if (reader.name() == "hubsurl")
             {
-                if (readHubsurlElement(LibraryUrls) == false)//递归下降算法，层层读取
+                if (readHubsurlElement(libraryUrls) == false)//递归下降算法，层层读取
                 {
                     return false;
                 }
@@ -69,26 +70,27 @@ bool MainWindow::ReadLibraryUrl(vector<string>& LibraryUrls, const QString& file
     return true;
 }
 
-bool MainWindow::readHubsurlElement(vector<string>& LibraryUrls)
+bool MainWindow::readHubsurlElement(vector<string>& libraryUrls)
 {
-    if (!(reader.isStartElement() && reader.name() == "hubsurl"))//不是则会报错
+    if (!(reader.isStartElement() && reader.name() == "hubsurl"))//检查是否是在根标签不是则会报错
     {
         return false;
     }
     reader.readNext(); // 读取下一个记号，它返回记号的类型
     while (!reader.atEnd())
     {
+		//读取到关闭标签“</hubsurl>”
         if (reader.isEndElement())
         {
             reader.readNext();
             break;
         }
-
+		//读取到新的顶级索引“<url>”
         if (reader.isStartElement())
         {
             if (reader.name() == "url")
             {
-                readUrlElement(LibraryUrls);
+                readUrlElement(libraryUrls);
             }
             else
             {
@@ -103,29 +105,27 @@ bool MainWindow::readHubsurlElement(vector<string>& LibraryUrls)
     return true;
 }
 
-void MainWindow::readUrlElement(vector<string>& LibraryUrls)
+void MainWindow::readUrlElement(vector<string>& libraryUrls)
 {
-    
-    string term = reader.attributes().value("term").toString().toStdString();
     reader.readNext();
     while (!reader.atEnd())
     {
+		//读取到关闭标签“</url>”跳出循环
         if (reader.isEndElement())
         {
             reader.readNext();
             break;
         }
-
+		//再次读取到下一个顶级标签
         if (reader.isStartElement())
         {
             if (reader.name() == "url")
             {
-                readUrlElement(LibraryUrls);
+                readUrlElement(libraryUrls);
             }
             else if (reader.name() == "address")
             {
-                //urls.push_back(term);
-                readAddressElement(LibraryUrls);
+                readAddressElement(libraryUrls);
             }
             else
             {
@@ -137,19 +137,16 @@ void MainWindow::readUrlElement(vector<string>& LibraryUrls)
             reader.readNext();
         }
     }
-
-
 }
 
-void MainWindow::readAddressElement(vector<string>& LibraryUrls)
+void MainWindow::readAddressElement(vector<string>& libraryUrls)
 {
     QString page = reader.readElementText();
     if (reader.isEndElement())
     {
         reader.readNext();
     }
-    urls.push_back(page.toStdString());
-    LibraryUrls.push_back(page.toStdString());
+    libraryUrls.push_back(page.toStdString());
 }
 
 void MainWindow::skipUnknownElement()
@@ -162,7 +159,7 @@ void MainWindow::skipUnknownElement()
             reader.readNext();
             break;
         }
-
+		
         if (reader.isStartElement())
         {
             skipUnknownElement();

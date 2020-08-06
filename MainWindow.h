@@ -36,7 +36,6 @@ private:
 
 private:
     Ui::MainWindowClass ui;
-    vector<string>urls;
 };
 
 
